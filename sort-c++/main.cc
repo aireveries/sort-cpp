@@ -1,22 +1,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  SORT: A Simple, Online and Realtime Tracker
-//  
+//
 //  This is a C++ reimplementation of the open source tracker in
 //  https://github.com/abewley/sort
 //  Based on the work of Alex Bewley, alex@dynamicdetection.com, 2016
 //
 //  Cong Ma, mcximing@sina.cn, 2016
-//  
+//
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
 //  the Free Software Foundation, either version 3 of the License, or
 //  (at your option) any later version.
-//  
+//
 //  This program is distributed in the hope that it will be useful,
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//  
+//
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,8 +24,9 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <iomanip> // to format image names using setw() and setfill()
-#include <io.h>    // to check file existence using POSIX function access(). On Linux include <unistd.h>.
+#include <unistd.h> // to check file existence using POSIX function access(). On Linux include <unistd.h>.
 #include <set>
 
 #include "Hungarian.h"
@@ -97,7 +98,7 @@ void TestSORT(string seqName, bool display)
 	string imgPath = "D:/Data/Track/2DMOT2015/train/" + seqName + "/img1/";
 
 	if (display)
-		if (_access(imgPath.c_str(), 0) == -1)
+		if (access(imgPath.c_str(), 0) == -1)
 		{
 			cerr << "Image path not found!" << endl;
 			display = false;
@@ -128,6 +129,8 @@ void TestSORT(string seqName, bool display)
 		ss >> tb.frame >> ch >> tb.id >> ch;
 		ss >> tpx >> ch >> tpy >> ch >> tpw >> ch >> tph;
 		ss.str("");
+
+		// std::cout << tb.frame << " " << tb.id << " " << tpx << " " << tpy << " " << tpw << " " << tph << std::endl;
 
 		tb.box = Rect_<float>(Point_<float>(tpx, tpy), Point_<float>(tpx + tpw, tpy + tph));
 		detData.push_back(tb);
@@ -187,6 +190,8 @@ void TestSORT(string seqName, bool display)
 		cerr << "Error: can not create file " << resFileName << endl;
 		return;
 	}
+
+	std::stringstream result;
 
 	//////////////////////////////////////////////
 	// main loop
@@ -347,8 +352,10 @@ void TestSORT(string seqName, bool display)
 		cycle_time = (double)(getTickCount() - start_time);
 		total_time += cycle_time / getTickFrequency();
 
-		for (auto tb : frameTrackingResult)
+		for (auto tb : frameTrackingResult) {
+			result << tb.frame << "," << tb.id << "," << tb.box.x << "," << tb.box.y << "," << tb.box.width << "," << tb.box.height << ",1,-1,-1,-1" << endl;
 			resultsFile << tb.frame << "," << tb.id << "," << tb.box.x << "," << tb.box.y << "," << tb.box.width << "," << tb.box.height << ",1,-1,-1,-1" << endl;
+		}
 
 		if (display) // read image, draw results and show them
 		{
@@ -357,15 +364,16 @@ void TestSORT(string seqName, bool display)
 			Mat img = imread(oss.str() + ".jpg");
 			if (img.empty())
 				continue;
-			
+
 			for (auto tb : frameTrackingResult)
 				cv::rectangle(img, tb.box, randColor[tb.id % CNUM], 2, 8, 0);
 			imshow(seqName, img);
-			cvWaitKey(40);
+			cv::waitKey(40);
 		}
 	}
 
 	resultsFile.close();
+	std::cout << result.str() << std::endl;
 
 	if (display)
 		destroyAllWindows();

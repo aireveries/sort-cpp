@@ -1,8 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // KalmanTracker.h: KalmanTracker Class Declaration
-
-#ifndef KALMAN_H
-#define KALMAN_H 2
+#pragma once
 
 #include "opencv2/video/tracking.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -45,7 +43,7 @@ public:
 
 	StateType predict();
 	void update(StateType stateMat);
-	
+
 	StateType get_state();
 	StateType get_rect_xysr(float cx, float cy, float s, float r);
 
@@ -65,8 +63,3 @@ private:
 
 	std::vector<StateType> m_history;
 };
-
-
-
-
-#endif
